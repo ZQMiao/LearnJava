@@ -36,7 +36,7 @@ List 是一个有序的接口 可以包含重复元素 提供了按索引访问�
 
 4.链表从堆中分配空间
 
-## 二者源码解读
+## 源码解读
 
 ### ArrayList
 
@@ -96,11 +96,11 @@ transient Object[] elementData; // non-private to simplify nested class access
 private int size;
 ```
 
-ArrayList 是基于动态数组的数据结构。如果没有指定大小则初始化大小为10 ，当增加元素时若超过原动态数组大小则扩大为原数组的1.5倍，然后把之前的数组拷贝到新的数组中。
+ArrayList 是基于动态数组的数据结构。如果没有指定大小则初始化大小为10 
 
 
 
-添加方法
+**添加方法**
 
 ```
 /**
@@ -117,28 +117,86 @@ public boolean add(E e) {
 private void ensureCapacityInternal(int minCapacity) {
         ensureExplicitCapacity(calculateCapacity(elementData, minCapacity));
  }
+ //
+private static int calculateCapacity(Object[] elementData, int minCapacity) {
+        if (elementData == DEFAULTCAPACITY_EMPTY_ELEMENTDATA) {
+            return Math.max(DEFAULT_CAPACITY, minCapacity);
+        }
+        return minCapacity;
+    }
 private void ensureExplicitCapacity(int minCapacity) {
         modCount++;
 
         // overflow-conscious code
         if (minCapacity - elementData.length > 0)
+        //扩容
             grow(minCapacity);
 }
-/**
+	/**
      * Increases the capacity to ensure that it can hold at least the
      * number of elements specified by the minimum capacity argument.
      *
      * @param minCapacity the desired minimum capacity
      */
-    private void grow(int minCapacity) {
+ private void grow(int minCapacity) {
         // overflow-conscious code
+        //记录之前数组长度
         int oldCapacity = elementData.length;
+        //记录新数组大小 = 旧数组长度 + 旧数组长度大小的一般
         int newCapacity = oldCapacity + (oldCapacity >> 1);
+        //判断扩容后的数组能否装下minCapacity个元素
         if (newCapacity - minCapacity < 0)
             newCapacity = minCapacity;
+         //判断扩容后数组长度是否大于最大值(Integer.MAX_VALUE - 8) 若大于最大值则交给hugeCapacity 进行处理
         if (newCapacity - MAX_ARRAY_SIZE > 0)
             newCapacity = hugeCapacity(minCapacity);
         // minCapacity is usually close to size, so this is a win:
+        //复制数组（浅复制）
         elementData = Arrays.copyOf(elementData, newCapacity);
     }
+    //判断若minCapacity个元素数量是否大于数组最大长度，若大于最大长度则使用Int最大值，否则取数组最大长度 
+  private static int hugeCapacity(int minCapacity) {
+        if (minCapacity < 0) // overflow
+            throw new OutOfMemoryError();
+        return (minCapacity > MAX_ARRAY_SIZE) ?
+            Integer.MAX_VALUE :
+            MAX_ARRAY_SIZE;
+    }
 ```
+
+总结：
+
+1.先判断添加一个元素是否会导致数组溢出
+
+2.判断若原数组为空则添加一个元素设置数组为默认长度10，判断是否溢出，若溢出则进行扩容，扩容后的大小为原数组的1.5倍
+
+3.并判断要添加元素后的数组大小是否大于数组长度最大值，若超过数组长度最大值则设置扩容大小为int最大值，否则设置成为数组最大值。
+
+4.最后通过Array.copyOf进行浅复制
+
+**查询方法**
+
+```
+/**
+ * Returns the element at the specified position in this list.
+ *
+ * @param  index index of the element to return
+ * @return the element at the specified position in this list
+ * @throws IndexOutOfBoundsException {@inheritDoc}
+ */
+public E get(int index) {
+//判断需查询索引的大小是否超过数组大小，若大于则抛出IndexOutOfBoundsException异常
+    rangeCheck(index);
+
+    return elementData(index);
+}
+
+ E elementData(int index) {
+        return (E) elementData[index];
+    }
+```
+
+通过下标来获取数组中的元素
+
+**删除方法**
+
