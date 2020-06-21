@@ -14,27 +14,17 @@ List 是一个有序的接口 可以包含重复元素 提供了按索引访问�
 
 
 
-1.ArrayList 继承了AbstractList抽象类，实现了List接口。
+1. ArrayList 继承了AbstractList抽象类，实现了List接口。
 
-2.通过ArrayList成员变量可以看出内部实现是Object类型的数组结构。
+2. 通过ArrayList成员变量可以看出内部实现是Object类型的数组结构。
 
-3.默认大小为10。
+3. 默认大小为10。
 
-4.由于实现类型为数组接口所以在操作大量的插入删除操作时，需要移动其他原油数据，效率较慢，对于随机访问效率较快。
+4. 由于实现类型为数组接口所以在操作大量的插入删除操作时，需要移动其他原油数据，效率较慢，对于随机访问效率较快。
 
-5.数组从栈中分配空间，数组无需初始化，系统自动申请空间。数组在内存中是连续的。
+5. 数组从栈中分配空间，数组无需初始化，系统自动申请空间。数组在内存中是连续的。
 
 
-
-### LinkedList
-
-1.LinkedList继承AbstractSequentialList，实现List接口。
-
-2.实现的数据结构为链表类型。
-
-3.LinkedList 可以动态的进行存储空间分配，可以方便的实现插入删除操作。对于查询操作需要对整个链表进行遍历
-
-4.链表从堆中分配空间
 
 ## 源码解读
 
@@ -50,10 +40,6 @@ public class ArrayList<E>
 ```
 
 #### 1.成员变量
-
-
-
-
 
 ```
 /**
@@ -98,9 +84,49 @@ private int size;
 
 ArrayList 是基于动态数组的数据结构。如果没有指定大小则初始化大小为10 
 
+#### 构造方法
 
+```
+public ArrayList(int initialCapacity) {
+    if (initialCapacity > 0) {
+        this.elementData = new Object[initialCapacity];
+    } else if (initialCapacity == 0) {
+        this.elementData = EMPTY_ELEMENTDATA;
+    } else {
+        throw new IllegalArgumentException("Illegal Capacity: "+
+                                           initialCapacity);
+    }
+}
 
-**添加方法**
+/**
+ * Constructs an empty list with an initial capacity of ten.
+ */
+public ArrayList() {
+    this.elementData = DEFAULTCAPACITY_EMPTY_ELEMENTDATA;
+}
+
+/**
+ * Constructs a list containing the elements of the specified
+ * collection, in the order they are returned by the collection's
+ * iterator.
+ *
+ * @param c the collection whose elements are to be placed into this list
+ * @throws NullPointerException if the specified collection is null
+ */
+public ArrayList(Collection<? extends E> c) {
+    elementData = c.toArray();
+    if ((size = elementData.length) != 0) {
+        // c.toArray might (incorrectly) not return Object[] (see 6260652)
+        if (elementData.getClass() != Object[].class)
+            elementData = Arrays.copyOf(elementData, size, Object[].class);
+    } else {
+        // replace with empty array.
+        this.elementData = EMPTY_ELEMENTDATA;
+    }
+}
+```
+
+#### **添加方法**
 
 ```
 /**
@@ -199,4 +225,85 @@ public E get(int index) {
 通过下标来获取数组中的元素
 
 **删除方法**
+
+```
+public boolean remove(Object o) {
+    if (o == null) {
+        for (int index = 0; index < size; index++)
+            if (elementData[index] == null) {
+                fastRemove(index);
+                return true;
+            }
+    } else {
+        for (int index = 0; index < size; index++)
+            if (o.equals(elementData[index])) {
+                fastRemove(index);
+                return true;
+            }
+    }
+    return false;
+}
+    /*
+     * Private remove method that skips bounds checking and does not
+     * return the value removed.
+     * 私有方法跳过边界检查，并且没有返回值
+     */
+    private void fastRemove(int index) {
+        modCount++;
+        int numMoved = size - index - 1;
+        if (numMoved > 0)
+        //elementData:源数组;index+1:源数组中的起始位置;elementData：目标数组；index：目标数组中的起始位置；numMoved：要复制的数组元素的数量；
+            System.arraycopy(elementData, index+1, elementData, index,
+                             numMoved);
+        elementData[--size] = null; // clear to let GC do its work
+    }
+```
+
+**添加全部方法**
+
+```
+/*
+*按指定集合的Iterator返回的顺序将指定集合中的所有元素追加到此列表的末尾。
+*/
+public boolean addAll(Collection<? extends E> c) {
+    Object[] a = c.toArray();
+    int numNew = a.length;
+    ensureCapacityInternal(size + numNew);  // Increments modCount
+    System.arraycopy(a, 0, elementData, size, numNew);
+    size += numNew;
+    return numNew != 0;
+
+
+```
+
+**retainAll 方法**
+
+```
+//仅保留此列表中指定集合中包含的元素。换句话说，从列表中删除所有不包含在指定集合中的元素
+public boolean retainAll(Collection<?> c) {
+    Objects.requireNonNull(c);
+    return batchRemove(c, true);
+}
+```
+
+**Array.copyOf()方法和System.arraycopy()方法**
+
+**联系**
+
+看两者源代码可以发现`copyOf()`内部调用了`System.arraycopy()`方法 
+
+**区别：**
+
+1. arraycopy()需要目标数组，将原数组拷贝到你自己定义的数组里，而且可以选择拷贝的起点和长度以及放入新数组中的位置
+2. copyOf()是系统自动在内部新建一个数组，并返回该数组。
+
+## LinkedList
+
+1.LinkedList继承AbstractSequentialList，实现List接口。
+
+2.实现的数据结构为链表类型。
+
+3.LinkedList 可以动态的进行存储空间分配，可以方便的实现插入删除操作。对于查询操作需要对整个链表进行遍历
+
+4.链表从堆中分配空间
 
