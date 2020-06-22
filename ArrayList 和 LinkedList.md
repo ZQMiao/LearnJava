@@ -307,3 +307,164 @@ public boolean retainAll(Collection<?> c) {
 
 4.链表从堆中分配空间
 
+## 成员变量
+
+```
+//大小
+transient int size = 0;
+
+/**
+ *首结点
+ * Pointer to first node.
+ * Invariant: (first == null && last == null) ||
+ *            (first.prev == null && first.item != null)
+ */
+transient Node<E> first;
+
+/**
+ *尾结点
+ * Pointer to last node.
+ * Invariant: (first == null && last == null) ||
+ *            (last.next == null && last.item != null)
+ */
+transient Node<E> last;
+```
+
+## 构造方法
+
+```
+/**
+ * Constructs an empty list.
+ * 空构造方法
+ */
+public LinkedList() {
+}
+
+/**
+ * Constructs a list containing the elements of the specified
+ * collection, in the order they are returned by the collection's
+ * iterator.
+ * 构造一个包含指定集合的元素的列表，其顺序由集合的迭代器返回。
+ * @param  c the collection whose elements are to be placed into this list
+ * @throws NullPointerException if the specified collection is null
+ */
+public LinkedList(Collection<? extends E> c) {
+    this();
+    addAll(c);
+}
+```
+
+## 添加方法
+
+**Add**
+
+```
+/**
+ * Inserts the specified element at the specified position in this list.
+ * Shifts the element currently at that position (if any) and any
+ * subsequent elements to the right (adds one to their indices).
+ * 将指定的元素插入此列表中的指定位置。 *将当前位于该位置的元素（如果有的话）和任何*后继元素右移（将其索引添加一个）。
+ * @param index index at which the specified element is to be inserted
+ * @param element element to be inserted
+ * @throws IndexOutOfBoundsException {@inheritDoc}
+ */
+public void add(int index, E element) {
+		//check 检查 准备插入的索引节点是否大于0 并且小于链表大小若不符合则抛出 IndexOutOfBoundsException
+    checkPositionIndex(index);
+
+		//向链表尾部插入
+    if (index == size)
+        linkLast(element);
+    else
+        linkBefore(element, node(index));
+}
+```
+
+**addAll**
+
+```
+//将集合c插入到链表尾部
+public boolean addAll(Collection<? extends E> c) {
+    return addAll(size, c);
+}
+```
+
+**addAll(int index, Collection<? extends E> c) 将集合插入到指定位置**
+
+```
+public boolean addAll(int index, Collection<? extends E> c) {
+    checkPositionIndex(index);
+
+    Object[] a = c.toArray();
+    int numNew = a.length;
+    if (numNew == 0)
+        return false;
+//获取前驱节点和后继节点
+    Node<E> pred, succ;
+    //如果插入位置为链表尾部则前驱节点为last,后继节点为null
+    if (index == size) {
+        succ = null;
+        pred = last;
+    } else {
+    //否则调用node(index)获取到后继节点，在得到前驱节点
+        succ = node(index);
+        pred = succ.prev;
+    }
+
+    for (Object o : a) {
+        @SuppressWarnings("unchecked") E e = (E) o;
+        Node<E> newNode = new Node<>(pred, e, null);
+        if (pred == null)
+        //如果插入位置为链表头
+            first = newNode;
+        else
+            pred.next = newNode;
+        pred = newNode;
+    }
+//如果插入位置为尾部则重置last
+    if (succ == null) {
+        last = pred;
+    } else {
+    //否则将插入的链表与先前的链表链接起来
+        pred.next = succ;
+        succ.prev = pred;
+    }
+
+    size += numNew;
+    modCount++;
+    return true;
+}
+```
+
+**get 返回此列表中指定位置的元素**
+
+```
+public E get(int index) {
+    checkElementIndex(index);
+    //调用Node(index)去找到index对应的node然后返回它的值
+    return node(index).item;
+}
+```
+
+**indexOf(Object o)返回指定元素在此列表中首次出现的索引，如果此列表不包含该元素，则返回-1**
+
+```
+public int indexOf(Object o) {
+    int index = 0;
+    if (o == null) {
+    //对整个链表进行遍历知道找到相对应的元素，并返回对应的索引
+        for (Node<E> x = first; x != null; x = x.next) {
+            if (x.item == null)
+                return index;
+            index++;
+        }
+    } else {
+        for (Node<E> x = first; x != null; x = x.next) {
+            if (o.equals(x.item))
+                return index;
+            index++;
+        }
+    }
+    return -1;
+}
+```
