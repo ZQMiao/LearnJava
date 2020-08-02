@@ -100,6 +100,7 @@ public ArrayList(int initialCapacity) {
 
 /**
  * Constructs an empty list with an initial capacity of ten.
+ * 创建接口为空的列表并且初始因子大小为 10
  */
 public ArrayList() {
     this.elementData = DEFAULTCAPACITY_EMPTY_ELEMENTDATA;
